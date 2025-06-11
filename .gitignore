@@ -1,0 +1,11 @@
+# Network configurations specific ignores
+*.bak
+*.old
+*.tmp
+*.log
+*.key # Be very careful with sensitive keys!
+*.pki
+
+# General ignores
+.DS_Store
+Thumbs.db
