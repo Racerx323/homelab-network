@@ -1,7 +1,8 @@
 # My Homelab Network
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![last commit](https://img.shields.io/github/last-commit/Racerx323/homelab-network.svg)](https://github.com/Racerx323/homelab-network/commits/main)
+![License](https://badgen.net/github/license/Racerx323/homelab-network)
+![last commit](https://badgen.net/github/last-commit/Racerx323/homelab-network)
+[![Open Issues](https://badgen.net/github/open-issues/Racerx323/homelab-network)](https://github.com/Racerx323/homelab-network/issues?q=is%3Aissue%20state%3Aopen)
 
 A repository to document and store all network configurations for my personal homelab. This includes settings for Ubiquiti gear, LoRaWAN infrastructure, and various other network services.
 
