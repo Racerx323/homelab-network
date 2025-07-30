@@ -68,7 +68,7 @@ flowchart LR
 | Switch              | Ubiquiti Flex Mini     | Access Switch                         | ...                                        |
 | Access Point        | Ubiquiti AP AC HD      | Wi-Fi Access                          | ...                                        |
 | Access Point        | Ubiquiti AP AC Mesh    | Wi-Fi Access                          | ...                                        |
-| LoRaWAN Gateway     | RAK7249                | LoRaWAN Packet Forwarder              | ...                                        |
+| LoRaWAN Gateway     | Kerlink iStation       | LoRaWAN Packet Forwarder              | ...                                        |
 <!-- | ...                 | ...                    | ...                                   | ...                                        | -->
 
 ### Software & Services
