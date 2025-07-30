@@ -2,7 +2,7 @@
 
 [code-of-conduct]: CODE_OF_CONDUCT.md
 [security-policy]: SECURITY.md
-[license]: LICENSE.md
+[license]: https://github.com/Racerx323/homelab-network/blob/main/LICENSE.md
 [new-issue]: https://github.com/Racerx323/homelab-network/issues/new/choose
 [pull-requests]: https://github.com/Racerx323/homelab-network/pulls
 [style-guide]: https://google.github.io/styleguide/
