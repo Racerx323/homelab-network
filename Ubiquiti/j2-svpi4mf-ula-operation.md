@@ -60,7 +60,7 @@ Clear each blocker before requesting live execution:
 - checkpoint this definition at a reviewed source revision;
 - repeat the read-only target and NetworkManager preflight;
 - confirm that UniFi and the LAN do not assign or use `::170` elsewhere;
-- confirm local-console recovery access;
+- confirm that `nmcli device checkpoint` supports `--timeout` on the host;
 - review the exact mutation and rollback commands; and
 - authorize one bounded execution window.
 
@@ -82,6 +82,7 @@ nmcli --fields ipv4.method,ipv4.addresses,ipv4.gateway,ipv4.dns \
 nmcli --fields ipv6.method,ipv6.addresses,ipv6.gateway,ipv6.never-default,ipv6.ignore-auto-routes,ipv6.ignore-auto-dns \
   connection show "Wired connection 1"
 nmcli connection show "Wired connection 1 before Nautobot ULA"
+nmcli device checkpoint --help
 ```
 
 The final command must report that the backup profile does not exist. Stop if
@@ -95,9 +96,10 @@ from another device blocks the operation.
 
 ## Mutation definition
 
-The live operation requires a separate authorization for these exact changes.
-Use the active connection UUID captured during preflight if its connection ID
-still equals `Wired connection 1` and its device still equals `eth0`.
+The live operation requires a separate authorization for these exact changes
+and an interactive terminal with a TTY. Use the active connection UUID captured
+during preflight if its connection ID still equals `Wired connection 1` and its
+device still equals `eth0`.
 
 Create a persistent rollback profile before changing the active profile:
 
@@ -110,40 +112,58 @@ sudo nmcli connection modify \
   connection.autoconnect no
 ```
 
-Append the permanent ULA. Do not replace the existing IPv6 address list:
+Run the mutation, reapply, and first acceptance checks inside a five-minute
+NetworkManager checkpoint. The `+ipv6.addresses` form appends the ULA without
+replacing the existing IPv6 address list:
 
 ```bash
-sudo nmcli connection modify \
+sudo nmcli device checkpoint --timeout 300 eth0 -- \
+  /bin/bash -c '
+set -euo pipefail
+
+nmcli connection modify \
   "Wired connection 1" \
   +ipv6.addresses "fd36:5aa8:6971:1::170/64"
-```
 
-Inspect and verify the saved profile before applying it:
-
-```bash
 nmcli --fields connection.id,connection.uuid,connection.interface-name,ipv4.method,ipv4.addresses,ipv4.gateway,ipv6.method,ipv6.addresses \
   connection show "Wired connection 1"
-sudo nmcli connection edit "Wired connection 1"
+
+nmcli device reapply eth0
+sleep 5
+
+ip -4 -o address show dev eth0 scope global \
+  | grep -F "10.1.2.170/22"
+
+ula_state=$(ip -6 -o address show dev eth0 \
+  to fd36:5aa8:6971:1::170/128)
+test -n "${ula_state}"
+case "${ula_state}" in
+  *tentative*|*dadfailed*) exit 1 ;;
+esac
+
+nmcli --get-values GENERAL.STATE device show eth0 \
+  | grep -F "100 (connected)"
+nmcli --get-values GENERAL.CONNECTION device show eth0 \
+  | grep -Fx "Wired connection 1"
+nmcli --get-values ipv6.addresses connection show "Wired connection 1" \
+  | tr "," "\n" \
+  | grep -Fx "fd36:5aa8:6971:1::170/64"
+
+ping -c 3 10.1.0.1
+ping -6 -c 3 fd36:5aa8:6971:1::1
+ping -6 -c 3 2606:4700:4700::1111
+'
 ```
 
-At the `nmcli>` prompt, run:
+The checkpoint command asks whether to commit after its child command exits.
+Leave that prompt unanswered while opening a second SSH session to
+`ama@10.1.2.170`. Run the acceptance commands from the second session. Type
+`Yes` in the original session only after every acceptance check passes.
 
-```text
-verify
-print ipv4
-print ipv6
-quit
-```
-
-Apply the supported IP-address change without cycling the connection:
-
-```bash
-sudo nmcli device reapply eth0
-```
-
-Stop and roll back if NetworkManager rejects the reapply. Do not use
-`nmcli connection up` over SSH without a new authorization and confirmed
-local-console coverage because reactivation can interrupt management access.
+Type `No` after any failed check. Loss of the original SSH session leaves the
+prompt unanswered, and NetworkManager restores the checkpoint when the
+300-second timeout expires. Do not pipe or pre-answer the confirmation prompt.
+Do not use `nmcli connection up` over SSH as part of this operation.
 
 ## Acceptance
 
@@ -171,14 +191,27 @@ Required results:
 - the global IPv6 address and link-local default route remain present;
 - the IPv4 gateway, ULA gateway, and global IPv6 test address respond;
 - the active profile remains `Wired connection 1`; and
-- a new SSH connection to `ama@10.1.2.170` succeeds before the operator closes
-  the original session.
+- the second SSH session to `ama@10.1.2.170` succeeds before the operator types
+  `Yes` at the checkpoint prompt.
 
 The Nautobot read-only qualification must then report
 `expected_permanent_ula_present: true`. DNS validation remains separate until
 `homelab-dns` defines and authorizes any `AAAA` or `PTR` change.
 
 ## Rollback
+
+### Automatic rollback before confirmation
+
+NetworkManager restores the `eth0` checkpoint when the operator types `No`,
+the confirmation prompt receives no answer for 300 seconds, or the SSH session
+ends before confirmation. After the timeout, reconnect to `10.1.2.170` and
+confirm that the permanent ULA is absent and the original IPv4 and IPv6 state
+has returned.
+
+Do not type `Yes` unless the second SSH session and every acceptance check
+succeed.
+
+### Manual rollback after confirmation
 
 Remove only the address added by this operation:
 
@@ -193,8 +226,8 @@ Confirm that IPv4 management access, the global IPv6 address, and both default
 routes remain healthy. Remove the backup profile only under a later cleanup
 authorization.
 
-If direct rollback fails, use local console access to activate the cloned
-profile:
+If direct rollback fails and out-of-band access is available, activate the
+cloned profile from that recovery session:
 
 ```bash
 sudo nmcli connection up \
