@@ -145,7 +145,7 @@ nmcli --get-values GENERAL.STATE device show eth0 \
   | grep -F "100 (connected)"
 nmcli --get-values GENERAL.CONNECTION device show eth0 \
   | grep -Fx "Wired connection 1"
-nmcli --get-values ipv6.addresses connection show "Wired connection 1" \
+nmcli --escape no --get-values ipv6.addresses connection show "Wired connection 1" \
   | tr "," "\n" \
   | grep -Fx "fd36:5aa8:6971:1::170/64"
 
@@ -160,10 +160,11 @@ Leave that prompt unanswered while opening a second SSH session to
 `ama@10.1.2.170`. Run the acceptance commands from the second session. Type
 `Yes` in the original session only after every acceptance check passes.
 
-Type `No` after any failed check. Loss of the original SSH session leaves the
-prompt unanswered, and NetworkManager restores the checkpoint when the
-300-second timeout expires. Do not pipe or pre-answer the confirmation prompt.
-Do not use `nmcli connection up` over SSH as part of this operation.
+After any failed check, leave the prompt unanswered and keep the original
+session open until NetworkManager reports that the checkpoint was removed. If
+the original SSH session is lost, wait for the full 300-second timeout before
+reconnecting and verifying rollback. Do not pipe or pre-answer the confirmation
+prompt. Do not use `nmcli connection up` over SSH as part of this operation.
 
 ## Acceptance
 
@@ -202,11 +203,12 @@ The Nautobot read-only qualification must then report
 
 ### Automatic rollback before confirmation
 
-NetworkManager restores the `eth0` checkpoint when the operator types `No`,
-the confirmation prompt receives no answer for 300 seconds, or the SSH session
-ends before confirmation. After the timeout, reconnect to `10.1.2.170` and
-confirm that the permanent ULA is absent and the original IPv4 and IPv6 state
-has returned.
+NetworkManager restores the `eth0` checkpoint when the confirmation prompt
+receives no answer for 300 seconds. Keep the session open and the prompt
+unanswered until NetworkManager reports that the checkpoint was removed. If
+the SSH session ends before confirmation, wait for the full timeout. Then
+reconnect to `10.1.2.170` and confirm that the permanent ULA is absent and the
+original IPv4 and IPv6 state has returned.
 
 Do not type `Yes` unless the second SSH session and every acceptance check
 succeed.
