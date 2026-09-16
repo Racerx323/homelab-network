@@ -104,3 +104,9 @@ Intent auto-detection, hybrid ranking, session memory, auto-expanding budget.
 ### Multi-Repo
 `run_pipeline` auto-queries all indexed repos. Use `repos: ["alias"]` to scope. Run `index_status` to see aliases.
 <!-- /vexp -->
+
+## UniFi controller access
+
+Use [Ubiquiti/UNIFI_ACCESS.md](Ubiquiti/UNIFI_ACCESS.md) for the canonical
+controller endpoint, Doppler credential references, TLS verification and
+read-only evidence boundaries. This reference does not grant live authorization.
