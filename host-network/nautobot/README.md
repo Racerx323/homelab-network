@@ -11,8 +11,9 @@ the original VIP ownership.
 The [primary result](primary-result.json) records successful handoff, route
 convergence and failback. Independent readbacks passed; both 60-second stability
 windows passed. Brief transition probe failures remain explicit in the result.
-Primary terminal Git archival is pending; do not rerun its consumed bundle.
-Next archive this result, then prepare the separate target firewall operation.
+Primary terminal Git archival is published and verified; do not rerun its consumed bundle.
+Next is the [backend firewall preparation](BACKEND_GUARD_PREPARATION.md):
+bounded read-only target preflight, then completion of the installation bundle.
 
 The [standby retry result](retry-result.json) accepts the permanent-source route
 on pihole00 only. Route convergence completed in about six seconds; sampled

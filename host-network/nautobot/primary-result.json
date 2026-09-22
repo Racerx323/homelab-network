@@ -32,7 +32,7 @@
     "Existing 01-ifupdown dispatcher warning persists.",
     "No reboot persistence test or backend firewall/packet acceptance performed."
   ],
-  "git_archival": "pending",
+  "git_archival": "published_tag_verified",
   "evidence_sha256": {
     "node-53.json": "bdf7255d716209c8dc1b17aa25bbc6a5e308d8c3d1e81aa8e35113a74e293be1",
     "health-status.json": "9265a4c54bffc597ba78639633e055b90fe7dbd5124798f48609d72f43c8d45a",
@@ -47,5 +47,7 @@
     "node-54.json": "e3fd6050654bfc064dcf5d42e91d45e2bc62bd637e829ff2c3dee00c2fd1c717",
     "health-history.jsonl": "e186232bcd97ed242565f09ba629019129af7d0c6b714fadfc443584b99e8c34",
     "stdout.log": "9e328d8e8e24ab9421e5afba3002453fa8baf8140515e41e4fd3d25e0394f174"
-  }
+  },
+  "archive_tag": "nautobot-primary-route-accepted",
+  "archive_commit": "84124efd241fd78e2e21bd28821e46152f409b3c"
 }

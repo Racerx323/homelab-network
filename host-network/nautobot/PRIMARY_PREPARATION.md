@@ -5,7 +5,7 @@
 The exact approved primary bundle completed successfully on September 22, 2026.
 See [primary-result.json](primary-result.json): route source ::53, restored VIP
 ownership, both stable windows and independent readback passed. Git terminal
-archival remains pending; do not rerun the consumed bundle. The preparation below
+archival is published and verified; do not rerun the consumed bundle. The preparation below
 is retained as historical scope, not a request for another execution.
 
 ## Historical scope and preparation status

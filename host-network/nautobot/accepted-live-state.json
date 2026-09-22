@@ -17,6 +17,8 @@
     "destination": "fd36:5aa8:6971:1::170/128",
     "bundle_sha256": "45ba4dc93eb12d17b5fd1fc71d2ed630030c8df081e29c8107308795fbb8c84c",
     "result": "primary-result.json",
-    "git_archival": "pending"
+    "git_archival": "published_tag_verified",
+    "archive_tag": "nautobot-primary-route-accepted",
+    "archive_commit": "84124efd241fd78e2e21bd28821e46152f409b3c"
   }
 }
