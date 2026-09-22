@@ -5,7 +5,7 @@
 The corrected retry installation passed; see [result](guard-retry-result.json).
 Rules, seven files, persistence/startup dependencies and independent management
 checks passed. The watchdog is disarmed and the application remains stopped.
-Git archival is pending; live packet qualification and reboot remain separate.
+Git archival is published and verified; live packet qualification and reboot remain separate.
 Do not rerun the consumed bundle.
 
 ## Historical first execution

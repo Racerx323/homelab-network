@@ -2,5 +2,9 @@
 useDefault = true
 
 [allowlist]
-description = "Ignore generated vexp index metadata"
+description = "Ignore generated vexp metadata and verified archived file digest"
 paths = ['''^\.vexp/''']
+
+# SHA-256 of terminal/bundle/scripts/packet_client.py; independently recomputed.
+regexTarget = "match"
+regexes = ['''^client\.py": "ff18c9f323dd45d85708b84f5856836589e5a7a6ad11f2b31d39a656fcb8950f"$''']

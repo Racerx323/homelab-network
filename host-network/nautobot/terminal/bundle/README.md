@@ -1,7 +1,9 @@
 # Nautobot backend network candidate
 
 Reusable network implementation; both recorded proxy preferred-source routes are accepted.
-Remaining stages require their own approved execution bundles.
+The [guard installation](guard-retry-result.json) is also accepted, with its archive tag published and verified. [Live packet qualification preparation](PACKET_QUALIFICATION_PREPARATION.md)
+defines the next bounded listener stage. Application startup and packet execution remain
+separate stages requiring their own approved execution bundles.
 The [network design](../../Ubiquiti/nautobot-backend-network-design.md) owns scope.
 Clients continue using the HA VIP; outbound backend connections select each proxy's permanent address. The primary operation used a temporary HA handoff and restored
 the original VIP ownership.

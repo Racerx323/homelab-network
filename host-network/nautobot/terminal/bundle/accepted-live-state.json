@@ -10,7 +10,7 @@
   "bundle_sha256": "000e96ff59259c0f83efd84cc3cc052567dcfd2657196d2edcf1e2584ce05b9b",
   "result": "retry-result.json",
   "primary_route_accepted": true,
-  "backend_guard_accepted": false,
+  "backend_guard_accepted": true,
   "primary_route": {
     "target": "pihole0",
     "preferred_source": "fd36:5aa8:6971:1::53",
@@ -20,5 +20,14 @@
     "git_archival": "published_tag_verified",
     "archive_tag": "nautobot-primary-route-accepted",
     "archive_commit": "84124efd241fd78e2e21bd28821e46152f409b3c"
+  },
+  "backend_guard": {
+    "scope": "installation_only",
+    "result": "guard-retry-result.json",
+    "bundle_sha256": "0a1e3ffd14e443a3e9b3678ca847f2536fea17d9003934c305dc432f995461b3",
+    "git_archival": "published_tag_verified",
+    "packet_qualification_accepted": false,
+    "archive_tag": "nautobot-backend-guard-accepted",
+    "archive_commit": "caf652f94716954c855c43a86fdac4c350595f1e"
   }
 }

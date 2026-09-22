@@ -11,7 +11,7 @@ from network_policy import ROOT, load_policy, nft_rules
 
 
 def freeze(destination, kind="review_only"):
-    if kind not in {'review_only', 'standby_route_retry', 'primary_route', 'guard_install'}:
+    if kind not in {'review_only', 'standby_route_retry', 'primary_route', 'guard_install', 'packet_qualification'}:
         raise ValueError('Consumed first-install kind is blocked; use reviewed retry')
     destination.mkdir(mode=0o700, parents=False, exist_ok=False)
     hashes = {}
@@ -28,9 +28,9 @@ def freeze(destination, kind="review_only"):
     rules = nft_rules(load_policy())
     (destination / 'rendered/rules.nft').write_text(rules)
     hashes['rendered/rules.nft'] = hashlib.sha256(rules.encode()).hexdigest()
-    manifest = {'kind': kind, 'execution_ready': kind in {'standby_route_retry', 'primary_route', 'guard_install'}, 'files': hashes,
-                'blockers': [] if kind in {'standby_route_retry', 'primary_route', 'guard_install'} else ['review_only_not_executable']}
-    if kind in {'standby_route_retry', 'primary_route', 'guard_install'}:
+    manifest = {'kind': kind, 'execution_ready': kind in {'standby_route_retry', 'primary_route', 'guard_install', 'packet_qualification'}, 'files': hashes,
+                'blockers': [] if kind in {'standby_route_retry', 'primary_route', 'guard_install', 'packet_qualification'} else ['review_only_not_executable']}
+    if kind in {'standby_route_retry', 'primary_route', 'guard_install', 'packet_qualification'}:
         manifest['scope'] = ('single standby preferred-source route retry with protected predecessor archive; '
                              'primary read-only health probes; bounded standby interruption permitted; '
                              'excludes firewall, intentional failover and Caddy changes')
@@ -61,6 +61,22 @@ def freeze(destination, kind="review_only"):
         for name in ['rendered/expected-table.sha256', 'rendered/installation.json']:
             hashes[name] = hashlib.sha256((destination / name).read_bytes()).hexdigest()
         manifest['scope'] = 'Install stopped Nautobot host backend guard and persistence only; 300-second recovery; no listener, application startup, proxy changes or reboot'
+    if kind == 'packet_qualification':
+        repository = ROOT.parents[1]
+        tag = 'nautobot-backend-guard-accepted'
+        commit = subprocess.check_output(['git', '-C', str(repository), 'rev-parse', tag+'^{}'], text=True).strip()
+        if commit != 'caf652f94716954c855c43a86fdac4c350595f1e':
+            raise ValueError('accepted guard archive identity drift')
+        raw_inputs = subprocess.check_output(['git', '-C', str(repository), 'show',
+            tag+':host-network/nautobot/terminal/bundle/rendered/installation.json'])
+        accepted = json.loads(subprocess.check_output(['git', '-C', str(repository), 'show',
+            tag+':host-network/nautobot/terminal/result.json']))
+        if accepted['accepted'] is not True:
+            raise ValueError('guard not accepted')
+        (destination/'rendered/guard-inputs.json').write_bytes(raw_inputs)
+        hashes['rendered/guard-inputs.json'] = hashlib.sha256(raw_inputs).hexdigest()
+        manifest['scope'] = 'Bounded disposable TCP8080 listener and client probes only; no guard, proxy, HA, application or boot changes; 180-second node lifetime'
+        manifest['predecessor_archive'] = {'tag': tag, 'commit': commit}
     raw = (json.dumps(manifest, sort_keys=True, indent=2) + '\n').encode()
     (destination / 'bundle.json').write_bytes(raw)
     identity = hashlib.sha256(raw).hexdigest()

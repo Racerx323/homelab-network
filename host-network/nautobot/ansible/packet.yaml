@@ -1,0 +1,110 @@
+---
+- name: Bounded backend packet qualification
+  hosts: all
+  gather_facts: false
+  vars:
+    candidate_execution_enabled: false
+  pre_tasks:
+    - name: Refuse execution before contact without exact launcher gate
+      ansible.builtin.assert:
+        that:
+          - candidate_execution_enabled | bool
+          - inventory_hostname == '10.1.2.170'
+          - packet_nonce is match('^[0-9a-f]{32}$')
+          - controller_evidence is defined
+      delegate_to: localhost
+      become: false
+  tasks:
+    - name: Verify accepted stopped guard baseline
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/bin/python3, -I, /var/lib/nautobot-backend-install/install_state.py, report]
+        chdir: /
+      changed_when: false
+    - name: Inspect trial path
+      become: true
+      ansible.builtin.stat:
+        path: /var/lib/nautobot-packet-trial
+      register: packet_path
+    - name: Refuse existing trial residue
+      ansible.builtin.assert:
+        that: not packet_path.stat.exists
+    - name: Create owned trial path
+      become: true
+      ansible.builtin.file:
+        path: /var/lib/nautobot-packet-trial
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Stage fixed helpers
+      become: true
+      ansible.builtin.copy:
+        src: '../scripts/{{ item }}'
+        dest: '/var/lib/nautobot-packet-trial/{{ item }}'
+        owner: root
+        group: root
+        mode: '0644'
+      loop: [packet_listener.py, packet_node.py, backend_guard.py, network_policy.py]
+    - name: Stage accepted guard identity
+      become: true
+      ansible.builtin.copy:
+        src: ../rendered/guard-inputs.json
+        dest: /var/lib/nautobot-packet-trial/guard-inputs.json
+        owner: root
+        group: root
+        mode: '0600'
+    - name: Prepare packet trial
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/bin/python3, -I, /var/lib/nautobot-packet-trial/packet_node.py, prepare]
+        chdir: /
+      changed_when: true
+    - name: Run listener and qualification with unconditional cleanup
+      block:
+        - name: Start listener with independent lifetime bound
+          become: true
+          ansible.builtin.command:
+            argv:
+              - systemd-run
+              - --unit=nautobot-packet-trial
+              - --property=User=nautobot
+              - --property=RuntimeMaxSec=175
+              - --property=TimeoutStopSec=5
+              - --property=KillMode=control-group
+              - --property=WorkingDirectory=/
+              - --property=NoNewPrivileges=yes
+              - /usr/bin/python3
+              - -I
+              - /var/lib/nautobot-packet-trial/packet_listener.py
+              - '{{ packet_nonce }}'
+          changed_when: true
+        - name: Inspect listener readiness
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /var/lib/nautobot-packet-trial/packet_node.py, ready]
+          register: packet_ready
+          retries: 5
+          delay: 1
+          until: packet_ready.rc == 0
+          changed_when: false
+        - name: Run bounded controller probes
+          ansible.builtin.command:
+            argv: [timeout, --kill-after=5s, 120s, python3, '{{ controller_evidence }}/scripts/packet_probe.py', '{{ controller_evidence }}', '{{ packet_nonce }}']
+          delegate_to: localhost
+          become: false
+          changed_when: false
+      always:
+        - name: Stop listener and prove cleanup without removing guard
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /var/lib/nautobot-packet-trial/packet_node.py, cleanup]
+          register: packet_cleanup
+          changed_when: true
+        - name: Preserve cleanup evidence
+          ansible.builtin.copy:
+            content: '{{ packet_cleanup.stdout }}'
+            dest: '{{ controller_evidence }}/packet-cleanup.json'
+            mode: '0600'
+          delegate_to: localhost
+          become: false

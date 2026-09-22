@@ -22,6 +22,7 @@ def main():
     run('ip', 'link', 'set', 'lo', 'up')
     child = subprocess.Popen(['unshare', '--net', 'sleep', '120'])
     sockets = []
+    listener = None
     try:
         for _ in range(100):
             if os.readlink(f'/proc/{child.pid}/ns/net') != os.readlink('/proc/self/ns/net'):
@@ -54,20 +55,25 @@ def main():
                 except OSError:
                     return
         for family, addr in [(socket.AF_INET, '10.1.2.170'), (socket.AF_INET6, 'fd36:5aa8:6971:1::170')]:
-            for port in [8080, 22, 4949, 10000]:
+            for port in [22, 4949, 10000]:
                 s = socket.socket(family)
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 if family == socket.AF_INET6:
                     s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
                 s.bind((addr, port)); s.listen(); sockets.append(s)
                 threading.Thread(target=serve, args=(s,), daemon=True).start()
+        listener = subprocess.Popen([sys.executable, str(Path(__file__).resolve().parents[1] / 'scripts/packet_listener.py'), 'a'*32], stdout=subprocess.PIPE, text=True)
+        assert json.loads(listener.stdout.readline())['ready'] is True
         def probe(src, port):
             dst = 'fd36:5aa8:6971:1::170' if ':' in src else '10.1.2.170'
-            code = '''import socket,sys
+            code = '''import socket,sys,json
 s=socket.socket(socket.AF_INET6 if ':' in sys.argv[1] else socket.AF_INET)
 s.settimeout(.4);s.bind((sys.argv[1],0))
 try:
- s.connect((sys.argv[2],int(sys.argv[3]))); assert s.recv(40)==b'guard-test\\n'; print('allowed')
+ s.connect((sys.argv[2],int(sys.argv[3]))); data=s.recv(1024)
+ if int(sys.argv[3])==8080: assert json.loads(data)=={'nonce':'a'*32,'peer':sys.argv[1],'local':sys.argv[2]}
+ else: assert data==b'guard-test\\n'
+ print('allowed')
 except socket.timeout: print('dropped')
 '''
             return run(*ns, sys.executable, '-c', code, src, dst, str(port)).strip()
@@ -93,6 +99,8 @@ except socket.timeout: print('dropped')
                           'local_table_digest':digest(normalized_table(table)),
                           'qualification':'local kernel only; target version readback still required'}))
     finally:
+        if listener is not None:
+            listener.terminate();listener.wait(timeout=5)
         for s in sockets:s.close()
         child.terminate();child.wait(timeout=5)
 

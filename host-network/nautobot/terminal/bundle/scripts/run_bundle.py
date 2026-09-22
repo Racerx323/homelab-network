@@ -18,7 +18,7 @@ def verify(bundle, approved):
     if hashlib.sha256(raw).hexdigest() != approved:
         raise ValueError('authorization hash mismatch')
     manifest = json.loads(raw)
-    if manifest['kind'] not in {'standby_route_retry','primary_route','guard_install'} or manifest['execution_ready'] is not True:
+    if manifest['kind'] not in {'standby_route_retry','primary_route','guard_install','packet_qualification'} or manifest['execution_ready'] is not True:
         raise ValueError('not an executable deployment bundle')
     for name, expected in manifest['files'].items():
         relative = Path(name)
@@ -50,6 +50,9 @@ def main():
            'ANSIBLE_CONFIG':str(root/'ansible.cfg')}
     if 'SSH_AUTH_SOCK' in os.environ:env['SSH_AUTH_SOCK']=os.environ['SSH_AUTH_SOCK']
     (root/'ansible.cfg').write_text('[defaults]\nhost_key_checking=True\nretry_files_enabled=False\n')
+    if manifest['kind'] == 'packet_qualification':
+        from packet_runner import execute
+        raise SystemExit(execute(root, env, args.approved_sha256))
     if manifest['kind'] == 'guard_install':
         from guard_runner import execute
         raise SystemExit(execute(root, env, args.approved_sha256))
