@@ -1,0 +1,15 @@
+[Unit]
+Description=Nautobot backend ingress guard
+After=network-pre.target
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /usr/local/lib/nautobot-network/backend_guard.py apply
+ExecReload=/usr/bin/python3 -I /usr/local/lib/nautobot-network/backend_guard.py check
+RemainAfterExit=yes
+# Stopping this unit deliberately leaves restrictive rules installed.
+# Removal is a separate action that first verifies port8080 is closed.
+
+[Install]
+WantedBy=multi-user.target

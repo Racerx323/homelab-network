@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "bundle_sha256": "3fa46001d772051e54b293759cdacd8045b21875ba026a0988c768ea2edc0a94",
+  "outcome": "failed_before_production_installation",
+  "accepted": false,
+  "cause": "rootless_podman_inherited_inaccessible_working_directory",
+  "live_mutation": "protected_staging_directory_and_helpers_only",
+  "production_files_absent": true,
+  "ruleset_empty": true,
+  "port8080_closed": true,
+  "application_inactive": true,
+  "watchdog_never_armed": true,
+  "management_and_ipv4_munin_passed": true,
+  "staging_retained": true,
+  "retry_authorized": false,
+  "evidence_sha256": {
+    "readback.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "health-before.json": "1354380ea753827b7865d5fb0da33ac3f6892d7649eebe478261b4b0e706ce51",
+    "readback.py": "90e5d93dd069cbb33c235240aa5aa4378072fc4bd143b662264e683ca8f64b1f",
+    "result.json": "ab32c12fe6e59fd503a712c8467ab2c17ae4eca666b3d03e9b11e0454aad555e",
+    "health-final.json": "1354380ea753827b7865d5fb0da33ac3f6892d7649eebe478261b4b0e706ce51",
+    "node-report.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr.log": "679b7083dec1cc4c186f33c6f7a4442fd4c28404f19c25f7c0e0ba5c6def31c5",
+    "diagnose.json": "30c96977d20c4b81a3a0c1ad94aa67d51384ce754255055fdbc23a203a621302",
+    "diagnose.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "node-report.stderr": "4a842b520a2d18ccd458e3c8d9845062f0cabd573ffeb6128e2ab58c41b98ae2",
+    "diagnose.py": "2e8889b554b2d4c3b040634da6fe1fbc6c60367ce0a1b3d542ead0abe5f61bd1",
+    "readback.json": "df4b4eecf0ed7e11234caa68b2743d32c0a2d3545e5ee7ff841903b71262a835",
+    "stdout.log": "5a6194d1682a95d899e84210558195e9d0a7aaa3208d5303d91e5e4b7cdd77ee"
+  }
+}

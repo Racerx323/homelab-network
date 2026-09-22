@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "consumed_bundle": "3fa46001d772051e54b293759cdacd8045b21875ba026a0988c768ea2edc0a94",
+  "staging_archived": true,
+  "source_absent": true,
+  "production_unchanged": true,
+  "local_copy_verified_files": 12,
+  "archive_manifest_sha256": "0c932cd4e621ab958428af2a546484ef821360f416afd6920bef902b208fdddf",
+  "archive_copy_sha256": "d3529daf1942af9e10b40b413c6da46786c8627042fe3a4e3606971add1b974b",
+  "retry_execution_authorized": false
+}

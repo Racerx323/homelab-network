@@ -1,0 +1,154 @@
+---
+- name: Candidate single standby preferred-source route
+  hosts: all
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  vars:
+    candidate_execution_enabled: false
+  pre_tasks:
+    - name: Block unqualified candidate before host contact
+      ansible.builtin.assert:
+        that:
+          - candidate_execution_enabled | bool
+          - route_host == 'pihole00'
+          - route_uuid is defined
+          - route_qualification_verified | default(false) | bool
+          - ha_standby_verified | default(false) | bool
+      delegate_to: localhost
+      become: false
+  tasks:
+    - name: Verify target identity before staging
+      ansible.builtin.command:
+        argv: [hostname, -s]
+      register: route_identity
+      changed_when: false
+    - name: Require the reviewed standby identity
+      ansible.builtin.assert:
+        that: route_identity.stdout == 'j1-svpihole00'
+    - name: Require healthy cluster before retained-state reconciliation
+      ansible.builtin.command:
+        argv: [python3, '{{ playbook_dir }}/../scripts/health_watch.py', '{{ controller_evidence }}', healthy]
+      delegate_to: localhost
+      become: false
+      changed_when: false
+    - name: Preserve and reconcile exact rolled-back predecessor
+      become: true
+      ansible.builtin.script:
+        cmd: "../scripts/reconcile_route.py {{ lookup('file', playbook_dir + '/../retry-contract.json') | b64encode }}"
+        executable: /usr/bin/python3
+      register: route_archive
+      changed_when: true
+    - name: Retain sanitized archive receipt
+      ansible.builtin.copy:
+        content: '{{ route_archive.stdout }}'
+        dest: '{{ controller_evidence }}/archive-receipt.json'
+        mode: '0600'
+      delegate_to: localhost
+      become: false
+    - name: Stage candidate route helper directory
+      become: true
+      ansible.builtin.file:
+        path: /usr/local/lib/nautobot-network
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Stage fixed route helpers
+      become: true
+      ansible.builtin.copy:
+        src: '../scripts/{{ item }}'
+        dest: '/usr/local/lib/nautobot-network/{{ item }}'
+        owner: root
+        group: root
+        mode: '0644'
+      loop: [network_policy.py, proxy_route.py]
+    - name: Create route policy directory
+      become: true
+      ansible.builtin.file:
+        path: /etc/nautobot-proxy-route
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Stage inactive policy input
+      become: true
+      ansible.builtin.copy:
+        src: ../policy.json
+        dest: /etc/nautobot-proxy-route/policy.json
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Arm independent rollback before changing route
+      become: true
+      ansible.builtin.command:
+        argv:
+          - systemd-run
+          - --unit=nautobot-proxy-route-retry-rollback
+          - --on-active=300s
+          - /usr/bin/python3
+          - -I
+          - /usr/local/lib/nautobot-network/proxy_route.py
+          - expire
+          - '{{ route_host }}'
+          - '{{ route_uuid }}'
+      changed_when: true
+    - name: Apply route with bounded recovery
+      block:
+        - name: Mark bounded apply window after fresh cluster gate
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/health_watch.py', '{{ controller_evidence }}', mark]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Apply exact persistent route and reapply without cycling interface
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/proxy_route.py,
+                   apply, '{{ route_host }}', '{{ route_uuid }}']
+          changed_when: true
+        - name: Mark completion before full post-apply stable observation
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/health_watch.py', '{{ controller_evidence }}', applied]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Require recovered standby and sixty seconds of sampled stable health
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/health_watch.py', '{{ controller_evidence }}', stable]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Mark acceptance and disarm rollback under node lock
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/proxy_route.py,
+                   accept, '{{ route_host }}', '{{ route_uuid }}']
+          changed_when: true
+      rescue:
+        - name: Mark recovery evidence window without clearing failure history
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/health_watch.py', '{{ controller_evidence }}', mark-recovery]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Attempt immediate rollback
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/proxy_route.py,
+                   rollback, '{{ route_host }}', '{{ route_uuid }}']
+          changed_when: true
+        - name: Verify recovered cluster and standby after rollback
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/health_watch.py', '{{ controller_evidence }}', recovered]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Stop retry watchdog after proven rollback and health recovery
+          become: true
+          ansible.builtin.command:
+            argv: [systemctl, stop, nautobot-proxy-route-retry-rollback.timer]
+          changed_when: true
+        - name: Report candidate not accepted
+          ansible.builtin.fail:
+            msg: Route trial rolled back; candidate execution remains unqualified.

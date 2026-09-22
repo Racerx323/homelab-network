@@ -1,0 +1,13 @@
+{
+  "baseline": "all_owned_files_absent",
+  "files": {
+    "/etc/nautobot-backend/expected-table.sha256": "b2275122c67d45f45098bf14c7b7a94eb8747542d5f94e3e1a0604bd422e937f",
+    "/etc/nautobot-backend/rules.nft": "4ad9ce9cf1544cfa7264792244c513da01c52f0ed24315e02ba7488d09a64d69",
+    "/etc/sudoers.d/nautobot-network": "836d67f2f38b388a76a5e6562be47066c200f01b03914ac800ad589f70910e73",
+    "/etc/systemd/system/nautobot-backend-guard.service": "ff5650d2213fd1d87de03307aeb445650018dcc81c0b10ebc369ea7bc002bca1",
+    "/etc/systemd/system/user@999.service.d/50-nautobot-network.conf": "0ca9caef2ef6a2a3703691261184df0289f0dd4f5a36bf1a48d5c6558b42ec74",
+    "/usr/local/lib/nautobot-network/backend_guard.py": "02ffd339d3099860aaeb75d29f545be13bae16bea337e337f34d1d909c8a589d",
+    "/usr/local/lib/nautobot-network/network_policy.py": "eb81d92f5bc09b507691d543b6fe39070876bcca24aef43e31b41be36bb06ae4"
+  },
+  "table_digest": "40b11a8b3f08cb695ed88bf3baa60b3fc3550e52668c5e6dd5d32113152397fc"
+}

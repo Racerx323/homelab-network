@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "collected_at": "2026-09-22T19:11:35Z",
+  "classification": "first_install_baseline_passed_with_limitations",
+  "execution_ready": false,
+  "limitations": [
+    "webmin_self_signed_certificate",
+    "munin_ipv6_protocol_acl_rejection",
+    "reboot_and_packet_qualification_pending"
+  ],
+  "evidence_sha256": {
+    "munin.json": "2f99a1384448372496c4ab6a303a2d2629640a3f7beb5981f3eb3f754fe286ca",
+    "reachability.json": "9037510884761c9abb5abf784e3829ebb1c0b11d132b7ac07bea45aeeb890db0",
+    "followup.py": "ddd1a1628764dc6f13c58d27e6289abf5f1148ea74c4fc8e38f89b84ec970416",
+    "munin.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "followup.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "munin.py": "d2ffc385754896cf9895a4f86a546a196c7dd1810cce30e986e6f24dbc204c30",
+    "target.py": "13f07b3735ee381ef9008a974cf160fbdb1426a08ef981a90d01a93f621cf336",
+    "followup.json": "21677062b6b52d7c04a3a767056a1be33e082fdc4d6adb44811c7a807d4bff8a",
+    "target.json": "d1b6fe16526ebfc9f8753962a6d00c61b096609a42ff1d22cb4c450fa8850ebe"
+  }
+}

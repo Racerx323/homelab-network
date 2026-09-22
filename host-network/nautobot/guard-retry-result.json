@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-09-22T19:35:08.007557+00:00",
+  "bundle_sha256": "0a1e3ffd14e443a3e9b3678ca847f2536fea17d9003934c305dc432f995461b3",
+  "scope": "guard_installation_only",
+  "outcome": "accepted",
+  "accepted": true,
+  "installed_files_verified": 7,
+  "effective_table_digest": "40b11a8b3f08cb695ed88bf3baa60b3fc3550e52668c5e6dd5d32113152397fc",
+  "guard_enabled_active": true,
+  "user_manager_dependency_verified": true,
+  "watchdog_inactive": true,
+  "boot_unchanged": true,
+  "application_stopped": true,
+  "port8080_closed": true,
+  "management_and_ipv4_munin_passed": true,
+  "packet_qualification_accepted": false,
+  "reboot_persistence_tested": false,
+  "git_archival": "pending",
+  "evidence_sha256": {
+    "readback.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "health-before.json": "1354380ea753827b7865d5fb0da33ac3f6892d7649eebe478261b4b0e706ce51",
+    "health-after.json": "00611dab6e1c3605442af49458ea9a534f99774fca78a0c7fd898b278941572f",
+    "readback.py": "90e5d93dd069cbb33c235240aa5aa4378072fc4bd143b662264e683ca8f64b1f",
+    "result.json": "d7a546c28b19cb8efd85484b7e1a7d2e69580e29dbcf04f1ee6951d1380006bd",
+    "health-final.json": "1354380ea753827b7865d5fb0da33ac3f6892d7649eebe478261b4b0e706ce51",
+    "node-report.json": "88b4c8a0f25da9a1d9f8b74095a31034b766be50af5f9bddf73989a03ee78e19",
+    "stderr.log": "679b7083dec1cc4c186f33c6f7a4442fd4c28404f19c25f7c0e0ba5c6def31c5",
+    "node-report.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "readback.json": "290c31ea0d2f0f0a90c55078832e17d533b72ec317434e646c62d1b304f8b954",
+    "stdout.log": "2f8a3fa5eebee1feef8de8f64c6ed51d14744eada2178a33c6e7f2f41d3bb326"
+  }
+}
