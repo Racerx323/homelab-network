@@ -15,3 +15,18 @@ jobs:
     name: Baseline validation
     uses: >-
       Racerx323/homelab-docs/.github/workflows/reusable-validation.yml@7d09aae0bdf0fe80bc10263d1e8e5c682037d848
+  backend-network:
+    name: Backend network candidate contracts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Unit and rollback contracts
+        run: >-
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover
+          -s host-network/nautobot/tests -p 'test_*.py' -v
+      - name: Install isolated packet-test tools
+        run: sudo apt-get update && sudo apt-get install -y nftables iproute2 util-linux
+      - name: Real packet policy in disposable namespaces
+        run: >-
+          sudo unshare --net python3
+          host-network/nautobot/tests/packet_namespace.py

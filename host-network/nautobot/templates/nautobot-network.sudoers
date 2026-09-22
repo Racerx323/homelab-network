@@ -1,0 +1,2 @@
+# Only fixed read-only verification; no user-controlled paths or actions.
+nautobot ALL=(root) NOPASSWD: /usr/bin/python3 -I /usr/local/lib/nautobot-network/backend_guard.py check

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "execution_authorized": false,
+  "destination4": "10.1.2.170",
+  "destination6": "fd36:5aa8:6971:1::170",
+  "port": 8080,
+  "interface": "eth0",
+  "proxies": {
+    "pihole0": {"ipv4": "10.1.0.53", "ipv6": "fd36:5aa8:6971:1::53"},
+    "pihole00": {"ipv4": "10.1.0.54", "ipv6": "fd36:5aa8:6971:1::54"}
+  },
+  "target": "j2-svpi4mf",
+  "first_route_target": "pihole00",
+  "rollback_seconds": 300
+}

@@ -1,0 +1,11 @@
+table inet nautobot_backend {
+    comment "homelab-network:nautobot-backend:v1"
+    chain ingress {
+        type filter hook prerouting priority -110; policy accept;
+        iifname "lo" accept
+        ip daddr 10.1.2.170 tcp dport 8080 ip saddr { 10.1.0.53, 10.1.0.54 } counter accept comment "allow-v4"
+        ip daddr 10.1.2.170 tcp dport 8080 counter drop comment "deny-v4"
+        ip6 daddr fd36:5aa8:6971:1::170 tcp dport 8080 ip6 saddr { fd36:5aa8:6971:1::53, fd36:5aa8:6971:1::54 } counter accept comment "allow-v6"
+        ip6 daddr fd36:5aa8:6971:1::170 tcp dport 8080 counter drop comment "deny-v6"
+    }
+}
