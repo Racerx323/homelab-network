@@ -1,0 +1,171 @@
+---
+- name: Primary route with DNS-owner handoff and recovery
+  hosts: all
+  gather_facts: false
+  serial: 1
+  vars:
+    candidate_execution_enabled: false
+  pre_tasks:
+    - name: Require exact primary scope before contact
+      ansible.builtin.assert:
+        that:
+          - candidate_execution_enabled | bool
+          - route_host == 'pihole0'
+          - route_uuid == '178f6c60-c62a-3c6c-9fae-04ebf2c4fdc3'
+      delegate_to: localhost
+  tasks:
+    - name: Verify primary hostname
+      ansible.builtin.command: hostname -s
+      changed_when: false
+      register: identity
+      failed_when: identity.stdout != 'j1-svpihole0'
+    - name: Refuse existing operation artifacts
+      become: true
+      ansible.builtin.stat:
+        path: '{{ item }}'
+        follow: false
+      loop:
+        - /usr/local/lib/nautobot-network/network_policy.py
+        - /usr/local/lib/nautobot-network/proxy_route.py
+        - /usr/local/lib/nautobot-network/primary_route.py
+        - /etc/nautobot-proxy-route/policy.json
+        - /var/lib/nautobot-proxy-route
+        - /var/lib/nautobot-primary-route
+      register: paths
+    - name: Require absent first-install state
+      ansible.builtin.assert:
+        that: not item.stat.exists
+      loop: '{{ paths.results }}'
+    - name: Stage root-owned directories
+      become: true
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: [/usr/local/lib/nautobot-network, /etc/nautobot-proxy-route]
+    - name: Stage exact qualified helpers
+      become: true
+      ansible.builtin.copy:
+        src: '../scripts/{{ item }}'
+        dest: '/usr/local/lib/nautobot-network/{{ item }}'
+        owner: root
+        group: root
+        mode: '0644'
+      loop: [network_policy.py, proxy_route.py, primary_route.py]
+    - name: Stage route policy
+      become: true
+      ansible.builtin.copy:
+        src: ../policy.json
+        dest: /etc/nautobot-proxy-route/policy.json
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Preserve primary baseline before watchdog or service mutation
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, prepare]
+      changed_when: true
+    - name: Arm local recovery before handoff
+      become: true
+      ansible.builtin.command:
+        argv: [systemd-run, --unit=nautobot-primary-route-rollback, --on-active=600s,
+               /usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, expire]
+      changed_when: true
+    - name: Handoff route change and failback
+      block:
+        - name: Begin bounded handoff window
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', handoff]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Stop only primary Keepalived
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, handoff]
+          changed_when: true
+        - name: Prove standby owns and serves all VIPs
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', healthy]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Begin bounded primary convergence
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', apply]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Apply primary preferred-source route
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, apply]
+          changed_when: true
+        - name: Begin post-apply stability window
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', settled]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Require sixty seconds stable under standby ownership
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', stable]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Begin delayed failback window
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', failback]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Restore primary Keepalived
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, failback]
+          changed_when: true
+        - name: Verify complete original ownership restoration
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', healthy]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Begin final stable interval
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', final]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Verify sixty seconds of final cluster health
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', stable]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Accept route and disarm recovery
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, accept]
+          changed_when: true
+      rescue:
+        - name: Restore route and independently restore primary Keepalived
+          become: true
+          ansible.builtin.command:
+            argv: [/usr/bin/python3, -I, /usr/local/lib/nautobot-network/primary_route.py, rollback]
+          changed_when: true
+        - name: Verify recovered original ownership and health
+          ansible.builtin.command:
+            argv: [python3, '{{ playbook_dir }}/../scripts/primary_health.py', '{{ controller_evidence }}', recovered]
+          delegate_to: localhost
+          become: false
+          changed_when: false
+        - name: Disarm only after proven recovery
+          become: true
+          ansible.builtin.command:
+            argv: [systemctl, stop, nautobot-primary-route-rollback.timer]
+          changed_when: true
+        - name: Preserve failure outcome
+          ansible.builtin.fail:
+            msg: Primary operation not accepted; retain route and HA recovery evidence.

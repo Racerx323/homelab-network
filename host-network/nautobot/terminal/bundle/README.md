@@ -1,24 +1,18 @@
 # Nautobot backend network candidate
 
-Reusable network implementation; both recorded proxy preferred-source routes are accepted.
+Reusable network implementation; only the recorded standby route is accepted.
 Remaining stages require their own approved execution bundles.
 The [network design](../../Ubiquiti/nautobot-backend-network-design.md) owns scope.
-Clients continue using the HA VIP; outbound backend connections select each proxy's permanent address. The primary operation used a temporary HA handoff and restored
-the original VIP ownership.
+No proxy VIP moves: clients continue using the HA VIP; only the outbound backend
+connection selects the proxy's permanent address.
 
 ## Current accepted scope
-
-The [primary result](primary-result.json) records successful handoff, route
-convergence and failback. Independent readbacks passed; both 60-second stability
-windows passed. Brief transition probe failures remain explicit in the result.
-Primary terminal Git archival is pending; do not rerun its consumed bundle.
-Next archive this result, then prepare the separate target firewall operation.
 
 The [standby retry result](retry-result.json) accepts the permanent-source route
 on pihole00 only. Route convergence completed in about six seconds; sampled
 cluster health passed and the node remained BACKUP. The short node-local IPv6
 health failure recovered without a recorded FAULT transition. The dispatcher
-warning remains. Do not rerun the consumed retry bundle. The published terminal commit/tag is recorded in [history](HISTORY.md). [Primary preparation](PRIMARY_PREPARATION.md) and the [primary operation](PRIMARY_OPERATION.md) preserve the executed scope.
+warning remains. Do not rerun the consumed retry bundle. The published terminal commit/tag is recorded in [history](HISTORY.md). [Primary preparation](PRIMARY_PREPARATION.md) defines the next scope, implemented in the [primary operation](PRIMARY_OPERATION.md).
 
 ## Implemented paths
 
@@ -70,7 +64,7 @@ Nautobot UID 999. Proxy logical names differ from hostnames (`j1-svpihole0`,
 `j1-svpihole00`). The standby's installed offline nmcli parser accepted the exact
 IPv6 `src` route. Its GENERAL.FILENAME field is unsupported; profile discovery
 therefore matches a unique persistent keyfile by UUID. This performs no live
-profile write. Runtime reapply and controlled HA transitions are now qualified by the route results; reboot persistence remains untested.
+profile write. Runtime reapply and HA persistence still need live qualification.
 
 The guard playbook now includes independent timed recovery, first-install absence
 checks, exact artifact hashes and a no-listener acceptance gate. It installs the
