@@ -12,8 +12,7 @@ The [standby retry result](retry-result.json) accepts the permanent-source route
 on pihole00 only. Route convergence completed in about six seconds; sampled
 cluster health passed and the node remained BACKUP. The short node-local IPv6
 health failure recovered without a recorded FAULT transition. The dispatcher
-warning remains. Do not rerun the consumed retry bundle. The local terminal commit/tag is recorded in [history](HISTORY.md); publication
-is pending. [Primary preparation](PRIMARY_PREPARATION.md) defines the next scope.
+warning remains. Do not rerun the consumed retry bundle. The published terminal commit/tag is recorded in [history](HISTORY.md). [Primary preparation](PRIMARY_PREPARATION.md) defines the next scope.
 
 ## Implemented paths
 

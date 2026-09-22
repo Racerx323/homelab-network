@@ -6,8 +6,7 @@ Prepare one route on pihole0 (pi@10.1.0.53): destination
 `fd36:5aa8:6971:1::170/128`, interface eth0, preferred source
 `fd36:5aa8:6971:1::53`. Keep the same route approach and permanent-source allowlist.
 The standby route is accepted; its terminal tag is
-`nautobot-standby-route-accepted`. Publication is pending explicit public-destination
-approval. No primary execution bundle is ready and no host was contacted for this
+`nautobot-standby-route-accepted`. The archive and annotated tag are published and verified. No primary execution bundle is ready and no host was contacted for this
 preparation. The consumed standby bundle must not be reused or edited.
 
 ## Proposed sequence
