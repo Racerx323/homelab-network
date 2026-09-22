@@ -34,6 +34,8 @@
     "result": "packet-result.json",
     "bundle_sha256": "fac5468c9a54a8e8e6272242c93efc9d0496aed74c75c0c754477ac61b296f17",
     "scope": "disposable_listener_current_ha_ownership",
-    "git_archival": "pending"
+    "git_archival": "published_tag_verified",
+    "archive_tag": "nautobot-packet-qualification-accepted",
+    "archive_commit": "48954d2f1b359bfa725e0f8fc2ebb3cfae1b71b8"
   }
 }

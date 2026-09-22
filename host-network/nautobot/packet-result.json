@@ -19,7 +19,7 @@
   "guard_unchanged": true,
   "application_stopped": true,
   "management_and_ipv4_munin_passed": true,
-  "git_archival": "pending",
+  "git_archival": "published_tag_verified",
   "limitations": [
     "actual_caddy_requests_not_tested",
     "other_ha_ownership_not_exercised_in_packet_trial",
@@ -40,5 +40,7 @@
     "stderr.log": "679b7083dec1cc4c186f33c6f7a4442fd4c28404f19c25f7c0e0ba5c6def31c5",
     "readback.json": "81a179e18b40120c1e739af101a1eba54d049c52d7e8283207cb29f2271b494b",
     "stdout.log": "e62f6977259f44a4997f3209276188fd79632899cce758da0c93a846c09349b6"
-  }
+  },
+  "archive_tag": "nautobot-packet-qualification-accepted",
+  "archive_commit": "48954d2f1b359bfa725e0f8fc2ebb3cfae1b71b8"
 }

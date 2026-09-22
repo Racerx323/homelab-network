@@ -4,8 +4,9 @@
 
 The approved live trial passed; [packet-result.json](packet-result.json) records
 its bounded scope and remaining limitations. Listener/tunnel cleanup and unchanged
-guard were independently verified. Git archival remains pending; do not rerun the
-consumed bundle.
+guard were independently verified. The annotated tag
+`nautobot-packet-qualification-accepted` is published and remotely verified at
+`48954d2`. Do not rerun the consumed bundle.
 
 ## Historical preparation gate and purpose
 
