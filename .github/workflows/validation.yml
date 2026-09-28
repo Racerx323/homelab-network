@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Packet contracts read the tagged accepted guard archive.
+          fetch-depth: 0
       - name: Unit and rollback contracts
         run: >-
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover
