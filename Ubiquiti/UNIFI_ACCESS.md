@@ -19,6 +19,10 @@ this procedure for controller evidence and network-owner coordination.
   must enforce GET-only access in their execution code; credential capability
   never expands an approved stage's scope. Writes require separate, explicit
   approval of the exact operation, target, inputs, acceptance and recovery.
+- The separately approved October 13 NTP IPv6 permit stage subsequently
+  exercised policy creation, updates and ordering writes successfully. Delete
+  recovery was not exercised. That scoped result does not authorize other writes
+  or independently establish every permission reported by the operator.
 - Cloud Site Manager is a separate endpoint, `https://api.ui.com`, with the
   separate `AUDIT_SITE_MANAGER` reference in the same Doppler configuration.
   Do not interchange local and cloud credentials or send either credential to

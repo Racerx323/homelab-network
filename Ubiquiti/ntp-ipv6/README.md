@@ -1,7 +1,7 @@
 # NTP IPv6 egress permit candidate
 
-Status: v1 execution held before mutation on baseline drift; v2 requires separate
-execution approval. No firewall or host changes are authorized by this document.
+Status: v2 policy and TCP acceptance completed; both permits remain enabled.
+V1 held before mutation. This document does not authorize another live operation.
 The NTP plan and operations remain owned by `homelab-ntp`; this repository owns
 the firewall transaction and address-management decision. Follow
 [UNIFI_ACCESS](../UNIFI_ACCESS.md) for credentials and verified local-controller
@@ -125,9 +125,22 @@ and all IPv6 probes remained refused. No recovery was needed. V2 binds this
 fresh evidence and preserves the observed DNS rule. The executed v1 archive,
 registration and evidence remain intact and must not be replayed.
 
+The separately approved v2 execution created and enabled both scoped permits.
+All six IPv6 TCP probes changed from refusal to success; all six IPv4 probes
+remained successful. Fresh checks covered all three upstreams under root and the
+NTP account. Both before/after diagnostics had matching dual-endpoint readbacks
+and completed cleanup. Existing policies, the operator's DNS rule, referenced
+lists and relative order were preserved. No recovery was needed or exercised.
+Private `apply/accepted.json` and `outcome.json` beside the v2 review retain
+acceptance and evidence bindings. Do not replay this accepted transaction.
+
+Next prepare the corrected NTP service-cutover review. UDP exchange, authenticated
+NTS, service sandbox, clock discipline and client/mDNS acceptance remain pending.
+No host addressing or clock-service activation occurred in this firewall stage.
+
 Run `python3 -m unittest discover -s Ubiquiti/ntp-ipv6/tests -v` from the network
 repository with `PYTHONDONTWRITEBYTECODE=1`. Tests exercise exact match/ports,
 ordering, partial writes, lost responses, restoration, drift rejection, private
 file handling and TLS-before-credential behavior. The NTP repository retains its
-diagnostic transport/staging tests. Live API permission and packet behavior are
-unaccepted until the separately approved execution succeeds.
+diagnostic transport/staging tests. V2 accepted policy writes and bounded TCP
+behavior; deletion recovery and prefix rollover were not exercised live.
