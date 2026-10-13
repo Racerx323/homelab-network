@@ -1,6 +1,7 @@
 # NTP IPv6 egress permit candidate
 
-Status: prepared offline; no firewall or host changes authorized by this document.
+Status: v1 execution held before mutation on baseline drift; v2 requires separate
+execution approval. No firewall or host changes are authorized by this document.
 The NTP plan and operations remain owned by `homelab-ntp`; this repository owns
 the firewall transaction and address-management decision. Follow
 [UNIFI_ACCESS](../UNIFI_ACCESS.md) for credentials and verified local-controller
@@ -113,6 +114,16 @@ numbered readback/cleanup continuation, never another start. Preserve all intent
 reports and logs; cleanup means diagnostic closure, not deletion of evidence.
 
 ## Offline verification
+
+The October 13 v1 preflight captured a change to the existing IPv6 DNS allow
+rule: its source now uses MAC addresses instead of the previously referenced
+IPv6 address list. That list was no longer referenced by the collected policies;
+its deletion was not established. Exact-baseline comparison correctly stopped
+before the mutation client authenticated or submitted any firewall write.
+The before-diagnostic was accepted and closed; all IPv4 TCP probes succeeded
+and all IPv6 probes remained refused. No recovery was needed. V2 binds this
+fresh evidence and preserves the observed DNS rule. The executed v1 archive,
+registration and evidence remain intact and must not be replayed.
 
 Run `python3 -m unittest discover -s Ubiquiti/ntp-ipv6/tests -v` from the network
 repository with `PYTHONDONTWRITEBYTECODE=1`. Tests exercise exact match/ports,
