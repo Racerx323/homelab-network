@@ -9,10 +9,16 @@ this procedure for controller evidence and network-owner coordination.
 - Use `https://udmbt.local.theama.co` for the local controller. Its IPv4 address
   is `10.1.0.1`. Use the FQDN for TLS hostname verification; do not substitute an
   IP URL, disable certificate verification, or override the TLS name.
-- The read-only local audit credential reference is Doppler project
+- The local API credential reference is Doppler project
   `homelab-dev`, config `prd_unifi`, secret `AUDIT_LOCAL`. Retrieve it only for
-  authorized queries, keep its value in process memory, and never print it,
+  authorized operations, keep its value in process memory, and never print it,
   persist it in evidence, or include it in Git or deployment hashes.
+- On October 13, 2026, the operator confirmed that `AUDIT_LOCAL` has full
+  read/write permissions. Its name does not imply a read-only role. This is
+  operator-confirmed capability, not a write-permission test. Read-only stages
+  must enforce GET-only access in their execution code; credential capability
+  never expands an approved stage's scope. Writes require separate, explicit
+  approval of the exact operation, target, inputs, acceptance and recovery.
 - Cloud Site Manager is a separate endpoint, `https://api.ui.com`, with the
   separate `AUDIT_SITE_MANAGER` reference in the same Doppler configuration.
   Do not interchange local and cloud credentials or send either credential to

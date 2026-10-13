@@ -6,6 +6,13 @@ exclude: (?:^|/)(?:\.vexp|\.agents)/
 repos:
   - repo: local
     hooks:
+      - id: ntp-ipv6-offline
+        name: NTP IPv6 firewall transaction offline tests
+        entry: python3 -B -m unittest discover -s Ubiquiti/ntp-ipv6/tests -v
+        language: system
+        files: ^(?:Ubiquiti/ntp-ipv6/|Ubiquiti/UNIFI_ACCESS\.md$)
+        pass_filenames: false
+
       - id: shellcheck
         name: ShellCheck
         entry: shellcheck

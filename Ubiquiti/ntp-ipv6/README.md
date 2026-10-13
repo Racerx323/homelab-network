@@ -1,0 +1,122 @@
+# NTP IPv6 egress permit candidate
+
+Status: prepared offline; no firewall or host changes authorized by this document.
+The NTP plan and operations remain owned by `homelab-ntp`; this repository owns
+the firewall transaction and address-management decision. Follow
+[UNIFI_ACCESS](../UNIFI_ACCESS.md) for credentials and verified local-controller
+access. The operator selected automated API execution and confirmed full
+read/write capability for `AUDIT_LOCAL`; the credential name is not its role.
+
+## Host identity instead of a global-address list
+
+Use one explicitly observed Ethernet MAC as the source of two IPv6-only policies:
+UDP 123 and TCP 4460 from the host's Default LAN source zone to External. The
+accepted node evidence supplies the MAC; fresh evidence must reproduce it and
+show all public upstream routes using `eth0` before mutation. Do not assume the
+management ULA is the public egress address or copy a leased global `/128` into
+a permanent list. Destination addresses remain unrestricted within External,
+matching the existing IPv4 permits' destination scope; only these two protocol/
+port combinations and this source MAC are added.
+
+The proposed source match does not contain the ISP prefix or host global address,
+so no scheduled address-list updater or write credential on the NTP host is
+needed. Keep ordinary RA/SLAAC and existing IPv4/ULA configuration. A replacement
+NIC, changed/randomized MAC, different interface or routed downstream placement
+requires a new identity check and reviewed policy update. MAC matching is a
+network source selector, not cryptographic host authentication. Actual IPv6
+forwarding behavior must pass the post-change probes; prefix rollover is not
+tested by this operation. Do not fall back to a whole-LAN permit or an IID/IP
+filter if the MAC match fails.
+
+The operator considered UniFi's `IPV6_IID` source selector and explicitly chose
+MAC matching with no host address change. Retained evidence does not establish
+a prefix-independent IID; adopting that selector would need a separate review
+of host address-generation settings and any fixed-IID configuration.
+
+Ubiquiti documents source-MAC and IP-version filters in
+[Zone-Based Firewalls](https://help.ui.com/hc/en-us/articles/115003173168-Zone-Based-Firewalls-in-UniFi).
+The API contract is the operator-supplied
+[Network v10.6.106 documentation](https://developer.ui.com/network/v10.6.106/gettingstarted)
+and its [OpenAPI schema](https://developer.ui.com/network/v10.6.106/openapi.json).
+The schema defines `MAC_ADDRESS` with
+`macAddressFilter.macAddresses`, and `PUT` for zone-pair policy ordering.
+The captured controller reports Network 11.0.83; stop on unsupported schema or
+method. Do not switch to a legacy/cloud API or retry a write with another method.
+
+## Prepare
+
+`prepare.py` reads the accepted, closed NTS transport inspection and the original
+recovered cutover evidence. It binds controller policies, zone ordering, referenced
+lists, host identity, current execution inputs and the public API schema hash.
+It prepares fresh `before`, `after` and conditional `recovery` diagnostic bundles
+using the checked-in NTP inspection tool. Each bundle has a unique operation ID,
+protected root-owned target staging, one controller capture, one node capture,
+matching dual-endpoint readback and diagnostic closure. Prior bundles are never
+modified. The resulting private review and parent archive require separate
+execution approval for both controller and NTP host.
+
+Invoke preparation with explicit accepted-evidence, NTP-repository, original
+cutover-source, original-cutover SHA-256, operation ID, downloaded OpenAPI and
+new private output paths. `prepare.py --help` lists these local arguments.
+No controller, Doppler or target access occurs during preparation. Never commit
+the private archive, receipts, MAC/address evidence or controller snapshot.
+
+## Apply and accept
+
+The approved parent `run.py --mode apply` checks its archive and bound execution
+inputs, registers once under an exclusive local lock, then:
+
+1. Runs fresh before-diagnostics and verifies identity, routes, accepted readbacks
+   and closure. Requires the controller baseline to remain unchanged.
+2. Verifies controller DNS/TLS before loading the credential in memory. Preserves
+   the pre-change snapshot privately. Requires a matching controller version,
+   network/zone identity, all existing policies, both orderings and referenced lists.
+3. Creates exactly two uniquely named policies disabled. Verifies the returned
+   policy content and preserves original policy order. Records each write intent
+   durably before submitting it; never retries a submitted create.
+4. Inserts the two policies immediately before the existing Default LAN NTP
+   reject, without changing any existing rule or its relative order. Enables only
+   the two verified candidates. Existing established/related return policy stays
+   in place; no generated return policy is requested.
+5. Runs after-diagnostics. Requires all 12 TCP 4460 connections to the three
+   configured upstreams, both families and root/NTP account contexts, to succeed.
+   Requires another exact policy/order readback before accepting the permits.
+
+API snapshots are not atomic. Coordinate an exclusive operator change window;
+every detected unrelated change holds the transaction. The mutation client is
+bounded to 240 API requests, 64 MiB total, 2 MiB per response, 10-second socket
+timeouts and a 600-second API deadline per attempt. Each child retains its own
+reviewed collection bounds. The two-hour start reserve precedes child expiry.
+
+This accepts policy scope and TCP connectivity only. UDP 123 policy is checked,
+but UDP exchange and TLS/NTS authentication remain explicit final-cutover gates.
+Account probes do not reproduce the service sandbox. NTPsec/GPSD remain stopped;
+no clock, receiver or host networking changes occur. No reboot or broad port
+opening is included.
+
+## Recovery and interrupted work
+
+On failure after a possible mutation, the runner attempts recovery: list exact
+operation-owned additions, verify their full match/action, disable them, delete
+them, then verify original policy contents and order. It discovers a created
+object even if its POST reply was lost. An unknown/broadened object or unrelated
+policy drift stops recovery instead of overwriting another administrator's work.
+It then runs the single recovery diagnostic and retains its observations; IPv6
+refusal after removing these permits is not itself a failed recovery.
+
+There is no independent gateway recovery timer. Workstation/controller loss may
+leave these narrowly scoped permits installed until connectivity returns. The
+approved `--mode recover` continuation may run once after interrupted/held apply;
+it does not repeat a POST. Recovery verifies policy restoration even if a child
+capture cannot finish. An interrupted or held diagnostic must use its own approved
+numbered readback/cleanup continuation, never another start. Preserve all intents,
+reports and logs; cleanup means diagnostic closure, not deletion of evidence.
+
+## Offline verification
+
+Run `python3 -m unittest discover -s Ubiquiti/ntp-ipv6/tests -v` from the network
+repository with `PYTHONDONTWRITEBYTECODE=1`. Tests exercise exact match/ports,
+ordering, partial writes, lost responses, restoration, drift rejection, private
+file handling and TLS-before-credential behavior. The NTP repository retains its
+diagnostic transport/staging tests. Live API permission and packet behavior are
+unaccepted until the separately approved execution succeeds.

@@ -11,6 +11,15 @@ permissions:
   contents: read
 
 jobs:
+  ntp-ipv6:
+    name: NTP IPv6 firewall transaction offline tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Policy and recovery contracts
+        run: >-
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover
+          -s Ubiquiti/ntp-ipv6/tests -v
   baseline:
     name: Baseline validation
     uses: >-
