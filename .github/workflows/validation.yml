@@ -20,6 +20,16 @@ jobs:
         run: >-
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover
           -s Ubiquiti/ntp-ipv6/tests -v
+      - name: Master profile and read-only readiness contracts
+        run: |
+          python3 -I -B Ubiquiti/munin-master-profile/test_persist.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_inspect.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_guard.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_deploy.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_probe_dashboard.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_qualify_dashboard.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_qualify_graph.py
+          python3 -I -B Ubiquiti/munin-master-profile/test_diagnose_preflight.py
   baseline:
     name: Baseline validation
     uses: >-

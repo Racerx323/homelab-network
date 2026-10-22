@@ -6,6 +6,62 @@ exclude: (?:^|/)(?:\.vexp|\.agents)/
 repos:
   - repo: local
     hooks:
+      - id: munin-master-profile-offline
+        name: Munin master profile persistence offline tests
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_persist.py
+        language: system
+        files: ^Ubiquiti/munin-master-profile/
+        pass_filenames: false
+
+      - id: munin-network-readiness-offline
+        name: Munin master static-network readiness offline tests
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_inspect.py
+        language: system
+        files: ^Ubiquiti/munin-master-profile/
+        pass_filenames: false
+
+      - id: munin-network-guard-offline
+        name: Native network checkpoint offline contracts
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_guard.py
+        language: system
+        files: ^Ubiquiti/munin-master-profile/
+        pass_filenames: false
+
+      - id: svmf-network-deployment-offline
+        name: svmf supervised network deployment contracts
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_deploy.py
+        language: system
+        files: ^(?:Ubiquiti/munin-master-profile/|\.pre-commit-config\.yaml$)
+        pass_filenames: false
+
+      - id: svmf-dashboard-probe-offline
+        name: svmf bounded dashboard diagnostic contracts
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_probe_dashboard.py
+        language: system
+        files: ^(?:Ubiquiti/munin-master-profile/|\.pre-commit-config\.yaml$)
+        pass_filenames: false
+
+      - id: svmf-apache-qualification-offline
+        name: svmf read-only Apache and verified TLS qualification contracts
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_qualify_dashboard.py
+        language: system
+        files: ^(?:Ubiquiti/munin-master-profile/|\.pre-commit-config\.yaml$)
+        pass_filenames: false
+
+      - id: svmf-graph-qualification-offline
+        name: svmf targeted verified HTTPS graph discovery contracts
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_qualify_graph.py
+        language: system
+        files: ^(?:Ubiquiti/munin-master-profile/|\.pre-commit-config\.yaml$)
+        pass_filenames: false
+
+      - id: svmf-preflight-diagnostic-offline
+        name: svmf read-only failed-preflight diagnostic contracts
+        entry: python3 -I -B Ubiquiti/munin-master-profile/test_diagnose_preflight.py
+        language: system
+        files: ^(?:Ubiquiti/munin-master-profile/|\.pre-commit-config\.yaml$)
+        pass_filenames: false
+
       - id: ntp-ipv6-offline
         name: NTP IPv6 firewall transaction offline tests
         entry: python3 -B -m unittest discover -s Ubiquiti/ntp-ipv6/tests -v

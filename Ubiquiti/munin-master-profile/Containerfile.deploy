@@ -1,0 +1,5 @@
+# Verify and record the local base image ID before building this fixture.
+FROM localhost/svmf-nm-rollback:bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server openssh-client sudo openssl \
+    && rm -rf /var/lib/apt/lists/*

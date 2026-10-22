@@ -8,6 +8,39 @@ the firewall transaction and address-management decision. Follow
 access. The operator selected automated API execution and confirmed full
 read/write capability for `AUDIT_LOCAL`; the credential name is not its role.
 
+## Separate Munin master reservation inspection
+
+The standalone `inspect-munin-source.py` prepares a read-only review for the
+existing Munin master's DHCP reservation. It is independent of the IPv6 permit
+transaction below and does not reuse its write-capable execution client.
+The operator chose to preserve current networking and verify the reservation
+and stable ULA policy. Alert ownership belongs to the native master; the Munin
+repository owns contact/metric configuration.
+
+Seal offline with `seal --directory NEW_PRIVATE_DIRECTORY`. After separate
+approval of the archive SHA-256, `execute --directory DIRECTORY --sha256 HASH`
+allows only the fixed integration-client GET and a legacy reservation-collection
+GET, after DNS/TLS precheck. The legacy endpoint is unqualified with the current
+credential; unsupported responses remain gaps. No login/write fallback exists.
+Only the matching MAC's reservation fields are retained; no other client data,
+credential, raw controller response or network change is persisted. See the
+generated review for exact endpoints, bounds, expiry and single-use behavior.
+The master-local effective IPv6 policy check is a separately approved NTP stage;
+neither snapshot alone proves renewal/reboot persistence.
+
+The approved reservation inspection completed October 20, 2026. Controller
+DNS/TLS, the fixed integration-client identity and the legacy reservation GET
+passed. Exactly one matching record enabled the existing IPv4 reservation and
+matched the master's observed source address. No network change occurred.
+The separate master-local check supports stable ULA generation under upstream
+defaults; saved-profile/installed-default and renewal/reboot evidence remains
+open in the NTP readiness checklist. Both executed stages are consumed.
+
+The later corrected saved-profile inspection found the active keyfile in `/run`.
+The [network-owned persistence proposal](../munin-master-profile/README.md) saves
+the same UUID/settings without reactivation. It requires separate mutation
+approval and has not executed; the IPv4 reservation remains unchanged.
+
 ## Host identity instead of a global-address list
 
 Use one explicitly observed Ethernet MAC as the source of two IPv6-only policies:
@@ -144,3 +177,28 @@ ordering, partial writes, lost responses, restoration, drift rejection, private
 file handling and TLS-before-credential behavior. The NTP repository retains its
 diagnostic transport/staging tests. V2 accepted policy writes and bounded TCP
 behavior; deletion recovery and prefix rollover were not exercised live.
+
+## Static master address-conflict inspection
+
+`inspect-munin-source.py seal --mode conflicts --directory OUTPUT` prepares a
+separate GET-only review of configured clients, active clients and network
+prefixes for the desired svmf IPv4/ULA. It also rechecks master identity and the
+existing reservation. The five fixed requests retain canonical TLS/DNS and
+in-memory Doppler credential handling. Only matching-address owner classes,
+coverage counts and typed relevant prefixes are exported; raw controller data,
+unrelated clients and secrets are discarded. Unsupported endpoints/schema fail
+without automatic alternatives.
+
+This is controller evidence, not proof that the address is unused. Incomplete
+IPv6 registry fields and offline/static devices remain visibility gaps. No
+probe, DHCP/profile/firewall/DNS change, checkpoint or service action is included.
+The conflict review and host-local recovery review need separate exact bundle
+approvals before contact. The later mutation still requires qualified recovery,
+complete settings, observed source selection and successful DAD.
+
+The approved conflict inspection completed without mutation. It confirmed the
+master reservation and no conflict in selected address fields across 61 configured
+and 43 active clients. The selected IPv6 fields and relevant prefix fields were
+not exposed. This is limited query/projection coverage, not proof of unused ULA
+or missing IPv6 configuration. Preserve future authorized DAD and guarded recovery;
+retain the exact consumed archive and do not replay the stage.
