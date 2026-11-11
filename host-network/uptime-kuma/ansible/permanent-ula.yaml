@@ -1,0 +1,260 @@
+---
+- name: Read the active connection identities
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - --terse
+      - --fields
+      - UUID,DEVICE
+      - connection
+      - show
+      - --active
+  register: kuma_network_active
+  changed_when: false
+- name: Read the profile's addressing methods
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - --get-values
+      - ipv4.method,ipv6.method
+      - connection
+      - show
+      - '{{ network_prerequisite.connection_uuid }}'
+  register: kuma_network_methods
+  changed_when: false
+- name: Read existing persistent IPv6 addresses
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - --escape
+      - 'no'
+      - --get-values
+      - ipv6.addresses
+      - connection
+      - show
+      - '{{ network_prerequisite.connection_uuid }}'
+  register: kuma_network_addresses_before
+  changed_when: false
+- name: Read current interface addresses
+  ansible.builtin.command:
+    argv:
+      - ip
+      - --json
+      - address
+      - show
+      - dev
+      - '{{ network_prerequisite.interface }}'
+  register: kuma_network_ip_before
+  changed_when: false
+- name: Read the current IPv6 default route
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -6
+      - --json
+      - route
+      - show
+      - default
+  register: kuma_network_routes_before
+  changed_when: false
+- name: Require the reviewed baseline before creating a checkpoint
+  ansible.builtin.assert:
+    that:
+      - (network_prerequisite.connection_uuid + ':' + network_prerequisite.interface) in kuma_network_active.stdout_lines
+      - kuma_network_methods.stdout_lines == ['auto', 'auto']
+      - kuma_network_addresses_before.stdout | trim == ''
+      - network_prerequisite.ipv4 in ((kuma_network_ip_before.stdout | from_json)[0].addr_info | map(attribute='local')
+        | list)
+      - (kuma_network_routes_before.stdout | from_json | length) > 0
+- name: Resolve the intended NetworkManager device
+  ansible.builtin.command:
+    argv:
+      - busctl
+      - --json=short
+      - call
+      - org.freedesktop.NetworkManager
+      - /org/freedesktop/NetworkManager
+      - org.freedesktop.NetworkManager
+      - GetDeviceByIpIface
+      - s
+      - '{{ network_prerequisite.interface }}'
+  register: kuma_network_device
+  changed_when: false
+- name: Require a typed device handle before creating the checkpoint
+  ansible.builtin.assert:
+    that:
+      - (kuma_network_device.stdout | from_json).type == 'o'
+      - (kuma_network_device.stdout | from_json).data[0] is match('^/org/freedesktop/NetworkManager/Devices/[0-9]+$')
+- name: Create a bounded native checkpoint without replacing other checkpoints
+  ansible.builtin.command:
+    argv:
+      - busctl
+      - --json=short
+      - call
+      - org.freedesktop.NetworkManager
+      - /org/freedesktop/NetworkManager
+      - org.freedesktop.NetworkManager
+      - CheckpointCreate
+      - aouu
+      - '1'
+      - '{{ (kuma_network_device.stdout | from_json).data[0] }}'
+      - '{{ network_prerequisite.checkpoint_timeout_seconds | string }}'
+      - '0'
+  register: kuma_network_checkpoint
+  changed_when: true
+- name: Require a typed recovery handle before modifying any profile
+  ansible.builtin.assert:
+    that:
+      - (kuma_network_checkpoint.stdout | from_json).type == 'o'
+      - (kuma_network_checkpoint.stdout | from_json).data[0] is match('^/org/freedesktop/NetworkManager/Checkpoint/[0-9]+$')
+- name: Add only the reviewed permanent address and independently verify connectivity
+  block:
+    - name: Append the permanent ULA without replacing automatic configuration
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - connection
+          - modify
+          - '{{ network_prerequisite.connection_uuid }}'
+          - +ipv6.addresses
+          - '{{ network_prerequisite.permanent_ula }}'
+      changed_when: true
+    - name: Reapply the existing connection without taking it down
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - device
+          - reapply
+          - '{{ network_prerequisite.interface }}'
+      changed_when: true
+    - name: Close the old SSH connection
+      ansible.builtin.meta: reset_connection
+    - name: Require a new authenticated management connection
+      ansible.builtin.wait_for_connection:
+        timeout: 45
+        connect_timeout: 8
+        sleep: 2
+    - name: Wait for the intended address to complete duplicate-address detection
+      ansible.builtin.command:
+        argv:
+          - ip
+          - --json
+          - address
+          - show
+          - dev
+          - '{{ network_prerequisite.interface }}'
+      register: kuma_network_ip_after
+      changed_when: false
+      until: ((kuma_network_ip_after.stdout | from_json)[0].addr_info | selectattr('local', 'equalto', network_prerequisite.permanent_ula.split('/')[0])
+        | rejectattr('tentative', 'defined') | rejectattr('dadfailed', 'defined') | list | length) == 1
+      retries: 15
+      delay: 1
+    - name: Read the live IPv6 route after reapply
+      ansible.builtin.command:
+        argv:
+          - ip
+          - -6
+          - --json
+          - route
+          - show
+          - default
+      register: kuma_network_routes_after
+      changed_when: false
+    - name: Read persistent IPv6 addresses after reapply
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - --escape
+          - 'no'
+          - --get-values
+          - ipv6.addresses
+          - connection
+          - show
+          - '{{ network_prerequisite.connection_uuid }}'
+      register: kuma_network_addresses_after
+      changed_when: false
+    - name: Require the intended addition and preserved IPv4 and RA routing
+      ansible.builtin.assert:
+        that:
+          - kuma_network_addresses_after.stdout | trim == network_prerequisite.permanent_ula
+          - network_prerequisite.ipv4 in ((kuma_network_ip_after.stdout | from_json)[0].addr_info | map(attribute='local')
+            | list)
+          - ((kuma_network_ip_before.stdout | from_json)[0].addr_info | selectattr('family', 'equalto', 'inet6')
+            | selectattr('local', 'match', '^[23]') | map(attribute='local') | list | difference((kuma_network_ip_after.stdout
+            | from_json)[0].addr_info | map(attribute='local') | list) | length) == 0
+          - (kuma_network_routes_after.stdout | from_json | map(attribute='gateway') | list | sort) == (kuma_network_routes_before.stdout
+            | from_json | map(attribute='gateway') | list | sort)
+    - name: Commit only after fresh SSH and address-route acceptance
+      ansible.builtin.command:
+        argv:
+          - busctl
+          - call
+          - org.freedesktop.NetworkManager
+          - /org/freedesktop/NetworkManager
+          - org.freedesktop.NetworkManager
+          - CheckpointDestroy
+          - o
+          - '{{ (kuma_network_checkpoint.stdout | from_json).data[0] }}'
+      changed_when: true
+  rescue:
+    - name: Ask NetworkManager to restore the checkpoint if it has not already expired
+      ansible.builtin.command:
+        argv:
+          - busctl
+          - call
+          - org.freedesktop.NetworkManager
+          - /org/freedesktop/NetworkManager
+          - org.freedesktop.NetworkManager
+          - CheckpointRollback
+          - o
+          - '{{ (kuma_network_checkpoint.stdout | from_json).data[0] }}'
+      register: kuma_network_rollback_request
+      failed_when: false
+      changed_when: kuma_network_rollback_request.rc == 0
+    - name: Reconnect before observing recovery
+      ansible.builtin.meta: reset_connection
+    - name: Wait for management access after the recovery request
+      ansible.builtin.wait_for_connection:
+        timeout: '{{ network_prerequisite.checkpoint_timeout_seconds + 30 }}'
+        connect_timeout: 8
+        sleep: 3
+    - name: Read persistent address state after recovery
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - --escape
+          - 'no'
+          - --get-values
+          - ipv6.addresses
+          - connection
+          - show
+          - '{{ network_prerequisite.connection_uuid }}'
+      register: kuma_network_profile_recovered
+      changed_when: false
+    - name: Require the original persistent profile state
+      ansible.builtin.assert:
+        that: kuma_network_profile_recovered.stdout | trim == kuma_network_addresses_before.stdout | trim
+        fail_msg: Manual intervention required; the persistent profile was not restored.
+    - name: Read recovered interface addresses
+      ansible.builtin.command:
+        argv:
+          - ip
+          - --json
+          - address
+          - show
+          - dev
+          - '{{ network_prerequisite.interface }}'
+      register: kuma_network_ip_recovered
+      changed_when: false
+    - name: Require restored IPv4 and absence of the added ULA
+      ansible.builtin.assert:
+        that:
+          - network_prerequisite.ipv4 in ((kuma_network_ip_recovered.stdout | from_json)[0].addr_info | map(attribute='local')
+            | list)
+          - network_prerequisite.permanent_ula.split('/')[0] not in ((kuma_network_ip_recovered.stdout | from_json)[0].addr_info
+            | map(attribute='local') | list)
+    - name: Preserve the failed operation after recovery
+      ansible.builtin.fail:
+        msg: ULA addition failed; original persistent address state and IPv4 were observed after recovery. No accepted
+          address change. Do not replay for a clean receipt. Observe checkpoint settling before further mutation;
+          use physical recovery if management access does not return.
